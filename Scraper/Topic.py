@@ -15,8 +15,7 @@ class Topic(ParsingGroup):
     def __str__(self):
         return f"Topic called {self._text}, link: {self._link}"
 
-    def unpack_children(self, data_children):
-        # Deserialize and restore child objects
+    def _unpack_children(self, data_children):
         return [Word(**child_data) for child_data in data_children]
 
     def parse_data(self):
