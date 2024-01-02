@@ -1,9 +1,10 @@
 import io
 import pickle
 from abc import ABC, abstractmethod
-from typing import BinaryIO
+from typing import BinaryIO, Callable
 
 import requests
+from bs4 import BeautifulSoup
 
 
 class ParsingObject(ABC):
@@ -104,3 +105,31 @@ class ParsingGroup(ParsingObject, ABC):
         self._is_complete = data_to_restore["is_complete"]
         self._is_parsed = data_to_restore["is_parsed"]
         self._children = self._unpack_children(data_to_restore["children"])
+
+    def _parse_data(self,
+                    session: requests.Session,
+                    get_webpage_dict: Callable[[BeautifulSoup], dict],
+                    children_class: type) -> bool:
+        if self._is_parsed:
+            return self._is_parsed
+
+        web_response = session.get(self.get_link())
+
+        if web_response.status_code == 200:
+
+            soup = BeautifulSoup(web_response.text, 'html.parser')
+
+            try:
+                res_dict = get_webpage_dict(soup)
+                for child_name, link in res_dict.items():
+                    self._children.append(children_class(child_name, link))
+
+                if len(self._children) != 0:
+                    self._is_parsed = True
+
+            except AttributeError:
+                print(f'{children_class.__name__} not found')
+        else:
+            print('Failed to get response...')
+
+        return self._is_parsed

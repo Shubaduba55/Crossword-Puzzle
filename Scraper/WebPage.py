@@ -67,27 +67,4 @@ class WebPage(ParsingGroup):
         :param session:
         :return: True if parsing process succeeded, else False.
         """
-        if self._is_parsed:
-            return self._is_parsed
-
-        web_response = session.get(self.get_link())
-
-        if web_response.status_code == 200:
-
-            soup = BeautifulSoup(web_response.text, 'html.parser')
-
-            try:
-
-                res_dict = get_categories(soup)
-                for category_name, link in res_dict.items():
-                    self._children.append(Category(category_name, link))
-
-                if len(self._children) != 0:
-                    self._is_parsed = True
-
-            except AttributeError:
-                print('Categories not found')
-        else:
-            print('Failed to get response...')
-
-        return self._is_parsed
+        return self._parse_data(session, get_categories, Category)

@@ -62,6 +62,9 @@ def main():
     wp = load_web_page("output")
     print(wp)
 
+    for category in wp._children:
+        print(category)
+
 
 if __name__ == '__main__':
     main()
