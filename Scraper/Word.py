@@ -29,6 +29,10 @@ class Word(ParsingObject):
             "definitions": self.__definitions
         }
 
+    def print_all(self, depth: int):
+        for definition in self.__definitions:
+            print(depth * "\t" + f"{definition}")
+
     def save_data(self, file_write: BinaryIO):
         if file_write.closed:
             raise "Passed file is closed"

@@ -96,10 +96,12 @@ def main():
     # create_and_save_web_page()
     wp = load_web_page("outputCategories")
 
-    status = parse_chosen_data(session, wp)
+    wp.print_all()
 
-    if status:
-        save_web_page(wp, "outputCategories")
+    # status = parse_chosen_data(session, wp)
+
+    # if status:
+    #     save_web_page(wp, "outputCategories")
 
     # save_web_page(wp, "Test")
 

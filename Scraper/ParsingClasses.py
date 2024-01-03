@@ -22,6 +22,10 @@ class ParsingObject(ABC):
         pass
 
     @abstractmethod
+    def print_all(self, depth: int):
+        pass
+
+    @abstractmethod
     def parse_data(self, session: requests.Session) -> bool:
         pass
 
@@ -58,6 +62,11 @@ class ParsingGroup(ParsingObject, ABC):
             "is_parsed": self._is_parsed,
             "children": [child_object.to_dict() for child_object in self._children]
         }
+
+    def print_all(self, depth: int = 0):
+        for child in self._children:
+            print(depth * "\t" + f"{child}")
+            child.print_all(depth + 1)
 
     def _parse_data(self,
                     session: requests.Session,
