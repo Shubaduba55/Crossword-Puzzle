@@ -12,13 +12,13 @@ a.topic-box-secondary-heading
 
 def get_topics(soup: BeautifulSoup) -> dict:
     """
-    Gets all categories from the WebPage.
+    Gets all topics from the Category.
     :param soup: scraped HTML code of the page
-    :return: dictionary of such template: {"Topic Name": "Link to the topic"}
+    :return: dictionary of such template: {"Topic's Name": "Link to the topic"}
     """
     results = {}
     try:
-        all_links = soup.find_all('a.topic-box-secondary-heading')
+        all_links = soup.select('a.topic-box-secondary-heading')
 
         for link in all_links:
             try:
@@ -35,20 +35,19 @@ def get_topics(soup: BeautifulSoup) -> dict:
 
 class Category(ParsingGroup):
     """
-    Class that stores info of categories and links to them. Its children are topics.
+    Class that stores info of topics and links to them. Its children are topics.
     """
+
     def __init__(self, text: str,
                  link: str,
                  is_complete: bool = False,
                  is_parsed: bool = False,
                  children=None):
+        children = [Topic(**child_data) for child_data in children] if children else []
         super().__init__(text, link, is_complete, is_parsed, children)
 
     def __str__(self):
         return f"Category called {self._text}, link: {self._link}"
-
-    def _unpack_children(self, data_children):
-        return [Topic(**child_data) for child_data in data_children]
 
     def parse_data(self, session: requests.Session) -> bool:
         """
@@ -60,5 +59,3 @@ class Category(ParsingGroup):
         :return: True if parsing process succeeded, else False.
         """
         return self._parse_data(session, get_topics, Topic)
-
-

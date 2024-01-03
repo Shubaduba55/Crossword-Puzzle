@@ -1,7 +1,5 @@
-import io
-import pickle
 from abc import ABC, abstractmethod
-from typing import BinaryIO, Callable
+from typing import Callable
 
 import requests
 from bs4 import BeautifulSoup
@@ -27,24 +25,6 @@ class ParsingObject(ABC):
     def parse_data(self, session: requests.Session) -> bool:
         pass
 
-    @abstractmethod
-    def save_data(self, file_write: io.BytesIO):
-        """
-        Saves data to the given file.
-        :param file_write: instance of the file, where you want to write the data.
-        :return:
-        """
-        pass
-
-    @abstractmethod
-    def read_data(self, file_read: io.BytesIO):
-        """
-        Reads data from the given file.
-        :param file_read: instance of the file, from where you want to read the data.
-        :return:
-        """
-        pass
-
 
 class ParsingGroup(ParsingObject, ABC):
     def __init__(self,
@@ -60,14 +40,11 @@ class ParsingGroup(ParsingObject, ABC):
     def is_parsed(self):
         return self._is_parsed
 
-    @abstractmethod
-    def _unpack_children(self, data_children):
+    def get_children(self) -> list:
         """
-        Performs process of deserialization and restoration of the child objects
-        :param data_children: dictionary of data for the children of the class
-        :return: List of objects of child class
+        :return: Copy of the children of the Class.
         """
-        pass
+        return self._children.copy()
 
     def to_dict(self) -> dict:
         """
@@ -81,30 +58,6 @@ class ParsingGroup(ParsingObject, ABC):
             "is_parsed": self._is_parsed,
             "children": [child_object.to_dict() for child_object in self._children]
         }
-
-    def save_data(self, file_write: BinaryIO):
-        if file_write.closed:
-            raise "Passed file is closed"
-        data_to_save = {
-            "text": self._text,
-            "link": self._link,
-            "is_complete": self._is_complete,
-            "is_parsed": self._is_parsed,
-            "children": [child_object.to_dict() for child_object in self._children]
-        }
-        pickle.dump(data_to_save, file_write)
-
-    def read_data(self, file_read: BinaryIO):
-        if file_read.closed:
-            raise "Passed file is closed"
-        data_to_restore = pickle.load(file_read)
-        print("Data to restore:", data_to_restore)
-        print("Keys in data to restore:", data_to_restore.keys())
-        self._text = data_to_restore["text"]
-        self._link = data_to_restore["link"]
-        self._is_complete = data_to_restore["is_complete"]
-        self._is_parsed = data_to_restore["is_parsed"]
-        self._children = self._unpack_children(data_to_restore["children"])
 
     def _parse_data(self,
                     session: requests.Session,
