@@ -125,3 +125,25 @@ class WebPage(ParsingGroup):
             if not parsing_status_successful:
                 return False
         return parsing_status_successful
+
+    def parse_topics_for_specific_category(self,
+                                           session: requests.Session,
+                                           min_delay: float = 0,
+                                           max_delay: float = 0) -> bool:
+
+        parsing_status_successful = False
+
+        category = self.display_and_choose_child()
+
+        if isinstance(category, Category):  # Always True
+            for topic in category.get_children():
+
+                parsing_status_successful = topic.parse_data(session)
+                sleeping_time = uniform(min_delay, max_delay)
+                time.sleep(sleeping_time)
+                print(f"Time of our sleep: {sleeping_time}")
+                if not parsing_status_successful:
+                    return False
+            return parsing_status_successful
+
+        return False

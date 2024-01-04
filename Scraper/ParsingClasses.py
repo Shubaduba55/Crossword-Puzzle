@@ -82,7 +82,7 @@ class ParsingGroup(ParsingObject, ABC):
         while option <= 0 or option > n:
             option = int(input("Choose child: "))
 
-        return self._children[option]
+        return self._children[option-1]
 
     def print_all(self, depth: int = 0):
         for child in self._children:

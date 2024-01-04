@@ -67,6 +67,8 @@ def parse_chosen_data(session: requests.Session, webpage: WebPage) -> bool:
     """
     option = int(input("Choose what you want to do "
                        "\n 1. Parse all categories "
+                       "\n 2. Parse topics for specific category "
+                       ""
                        "\n Enter: "))
 
     if option == 1:
@@ -75,8 +77,55 @@ def parse_chosen_data(session: requests.Session, webpage: WebPage) -> bool:
         status = webpage.parse_categories(session, min_delay, max_delay)
         print("Parsing categories status:", status)
         return status
+    elif option == 2:
+        min_delay = float(input("Enter minimal delay (float): "))
+        max_delay = float(input("Enter maximal delay (float): "))
+        status = webpage.parse_topics_for_specific_category(session, min_delay, max_delay)
+        print("Parsing categories status:", status)
+        return status
 
     return False
+
+
+def choose_option(headers: dict):
+    option = int(input("Choose what you want to do "
+                       "\n 1. Create WebPage and save it. "
+                       "\n 2. Read WebPage and display its children. "
+                       "\n 3. Parse data for the WebPage. "
+                       "\n Enter: "))
+    if option == 1:
+        session = requests.Session()
+        session.headers.update(headers)
+
+        file_name = str(input("Enter file name (without extension, must be in data folder): "))
+
+        status = create_and_save_web_page(session, file_name)
+
+        print(f"Success! Data has been saved to {file_name}.dat file." if status
+              else "Failure. Data has not been parsed and saved.")
+
+    elif option == 2:
+        file_name = str(input("Enter file's name to read (without extension, must be in data folder): "))
+        webpage = load_web_page(file_name)
+        webpage.print_all()
+
+    elif option == 3:
+        session = requests.Session()
+        session.headers.update(headers)
+
+        file_name_read = str(input("Enter file's name which you want to use (without extension, must be in data "
+                                   "folder): "))
+        file_name_save = str(input("Enter file's name where you want to save data (without extension, must be in data "
+                                   "folder): "))
+
+        webpage = load_web_page(file_name_read)
+        status = parse_chosen_data(session, webpage)
+
+        if status:
+            save_web_page(webpage, file_name_save)
+            print(f"Success! Data has been saved to {file_name_save}.dat file.")
+        else:
+            print("Failure. Data has not been parsed and saved.")
 
 
 def main():
@@ -89,22 +138,7 @@ def main():
         "Accept-Language": "uk,en;q=0.9,en-GB;q=0.8,en-US;q=0.7"
     }
 
-    # Setup session
-    session = requests.Session()
-    session.headers.update(headers)
-
-    # create_and_save_web_page()
-    wp = load_web_page("outputCategories")
-
-    # wp.print_all()
-
-    print(wp.display_and_choose_child())
-    # status = parse_chosen_data(session, wp)
-
-    # if status:
-    #     save_web_page(wp, "outputCategories")
-
-    # save_web_page(wp, "Test")
+    choose_option(headers)
 
 
 if __name__ == '__main__':
