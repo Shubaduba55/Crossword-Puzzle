@@ -96,8 +96,9 @@ def main():
     # create_and_save_web_page()
     wp = load_web_page("outputCategories")
 
-    wp.print_all()
+    # wp.print_all()
 
+    print(wp.display_and_choose_child())
     # status = parse_chosen_data(session, wp)
 
     # if status:

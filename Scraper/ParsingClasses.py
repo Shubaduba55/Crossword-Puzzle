@@ -14,6 +14,9 @@ class ParsingObject(ABC):
     def is_complete(self):
         return self._is_complete
 
+    def get_text(self):
+        return self._text
+
     def get_link(self):
         return self._link
 
@@ -44,6 +47,9 @@ class ParsingGroup(ParsingObject, ABC):
     def is_parsed(self):
         return self._is_parsed
 
+    def get_number_of_children(self):
+        return len(self._children)
+
     def get_children(self) -> list:
         """
         :return: Copy of the children of the Class.
@@ -62,6 +68,21 @@ class ParsingGroup(ParsingObject, ABC):
             "is_parsed": self._is_parsed,
             "children": [child_object.to_dict() for child_object in self._children]
         }
+
+    def display_and_choose_child(self) -> ParsingObject:
+        n = len(self._children)
+
+        for i in range(n):
+            child = self._children[i]
+            print(f"{i + 1}. {child.get_text()} "
+                  f"{child.is_complete()} "
+                  f"{child.get_number_of_children()}")
+
+        option = 0
+        while option <= 0 or option > n:
+            option = int(input("Choose child: "))
+
+        return self._children[option]
 
     def print_all(self, depth: int = 0):
         for child in self._children:
