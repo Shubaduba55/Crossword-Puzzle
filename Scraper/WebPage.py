@@ -130,6 +130,13 @@ class WebPage(ParsingGroup):
                                            session: requests.Session,
                                            min_delay: float = 0,
                                            max_delay: float = 0) -> bool:
+        """
+        Parses words (only words) for each topic of specified Category.
+        :param max_delay: maximal sleep time between parsings.
+        :param min_delay: minimal sleep time between parsings.
+        :param session:
+        :return: True if parsing process succeeded, else False.
+        """
 
         parsing_status_successful = False
 

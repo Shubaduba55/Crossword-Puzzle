@@ -1,4 +1,6 @@
+import pickle
 from random import uniform
+import pandas as pd
 
 import requests
 from WebPage import WebPage
@@ -60,7 +62,7 @@ def create_and_save_web_page(session: requests.Session, file_name: str = "output
 
 def parse_chosen_data(session: requests.Session, webpage: WebPage) -> bool:
     """
-
+    Parses specific data: 1. All categories from the WebPage; 2. All the topics for specific category.
     :param session:
     :param webpage:
     :return: True, if process has been successful, otherwise False.
@@ -87,11 +89,45 @@ def parse_chosen_data(session: requests.Session, webpage: WebPage) -> bool:
     return False
 
 
+def unpack_webpage(file_name: str) -> pd.DataFrame:
+    """
+    Unpacks dictionary of WebPage that is stored in the given file. Note: file's name should not contain extension;
+    file must be stored in the data folder.
+    :param file_name: file to read from.
+    :return: returns Dataframe object of pandas library.
+    """
+
+    with open(f"./data/{file_name}.dat", "rb") as file:
+        webpage_dict = pickle.load(file)
+
+    final_data = []
+    categories_array = webpage_dict['children']
+    for category in categories_array:
+        topics_array = category['children']
+        for topic in topics_array:
+            words_array = topic["children"]
+            for word in words_array:
+                final_data.append({
+                    "Category": category["text"],
+                    "Topic": topic["text"],
+                    "Word": word["text"],
+                })
+
+    df = pd.DataFrame(final_data)
+    return df
+
+
 def choose_option(headers: dict):
+    """
+    Function for User interaction with the program.
+    :param headers: info for data parsing from browser
+    :return:
+    """
     option = int(input("Choose what you want to do "
                        "\n 1. Create WebPage and save it. "
                        "\n 2. Read WebPage and display its children. "
                        "\n 3. Parse data for the WebPage. "
+                       "\n 4. Export WebPage data from .dat file into .csv table. "
                        "\n Enter: "))
     if option == 1:
         session = requests.Session()
@@ -126,6 +162,16 @@ def choose_option(headers: dict):
             print(f"Success! Data has been saved to {file_name_save}.dat file.")
         else:
             print("Failure. Data has not been parsed and saved.")
+
+    elif option == 4:
+        file_name_read = str(input("Enter .dat file's name which you want to use (without extension, must be in data "
+                                   "folder): "))
+        file_name_save = str(input("Enter .csv file's name where you want to save data (without extension, must be in "
+                                   "data folder): "))
+
+        dataframe = unpack_webpage(file_name_read)
+
+        dataframe.to_csv(f"./csv/{file_name_save}", index=False)
 
 
 def main():
