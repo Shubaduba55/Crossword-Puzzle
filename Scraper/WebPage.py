@@ -8,6 +8,8 @@ from ParsingClasses import ParsingGroup
 import requests
 from bs4 import BeautifulSoup
 
+from Topic import Topic
+
 """
 Note for HTML file structure:
 body -> div (id="main_container") -> div (class="responsive_container") -> div (class = "topic_list") ->
@@ -154,3 +156,50 @@ class WebPage(ParsingGroup):
             return parsing_status_successful
 
         return False
+
+    def parse_words_for_specific_category(self,
+                                          session: requests.Session,
+                                          min_delay: float = 0,
+                                          max_delay: float = 0) -> bool:
+        """
+        Parses words' definitions for each topic of specified Category.
+        :param max_delay: maximal sleep time between parsings.
+        :param min_delay: minimal sleep time between parsings.
+        :param session:
+        :return: True if parsing process succeeded, else False.
+        """
+
+        parsing_status_successful = False
+
+        category = self.display_and_choose_child()
+
+        if isinstance(category, Category):  # Always True
+            topic = category.display_and_choose_child()
+            if isinstance(topic, Topic):  # Always True
+                for word in topic.get_children():
+                    parsing_status_successful = word.parse_data(session)
+                    sleeping_time = uniform(min_delay, max_delay)
+                    time.sleep(sleeping_time)
+                    print(f"Time of our sleep: {sleeping_time}")
+                if not parsing_status_successful:
+                    return False
+                else:
+                    topic.check_if_complete()
+                    category.check_if_complete()
+
+        self.check_if_complete()
+        return parsing_status_successful
+
+    def update_word_links(self):
+        """
+        Fixes the problem with links to Words (when they store only a part of the path
+        to the source like '/definition/english/aardvark').
+        :return: True if succeeded, else False.
+        """
+        oxford_website = 'https://www.oxfordlearnersdictionaries.com'
+        for category in self._children:
+            for topic in category.get_children():
+                for word in topic.get_children():
+                    word_link = word.get_link()
+                    if word_link[:5] != "https":
+                        word.set_link(oxford_website + word_link)

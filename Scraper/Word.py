@@ -2,8 +2,52 @@ import pickle
 from typing import BinaryIO
 
 import requests
+from bs4 import BeautifulSoup
 
 from ParsingClasses import ParsingObject
+
+"""
+div.webtop span.pos -- word type
+span.def -> text
+"""
+
+
+def get_word_info(soup: BeautifulSoup) -> dict:
+    """
+    Gets all definitions and additional info about Word.
+    :param soup: scraped HTML code of the page
+    :return: dictionary of such template: {"Word's Type": "Word's definitions"}
+    """
+    results = {}
+    try:
+        word_type = soup.select('div.webtop span.pos', limit=1)
+        word_type = word_type.pop().get_text()
+
+        # ol.senses_multiple span.def, div:not(idioms) > ol.sense_single span.def
+
+        words_info = soup.select('div:not(idioms) > ol.senses_multiple li.sense, div:not(idioms) > '
+                                 'ol.sense_single li.sense')
+
+        results[word_type] = []
+        for word_info in words_info:
+            try:
+                definition = word_info.select("span.def", limit=1)
+                definition_text = definition.pop().get_text()
+                definition_topic = word_info.select("span.topic_name", limit=1)
+
+                if len(definition_topic) != 0:
+                    topic_text = definition_topic.pop().get_text()
+                    definition_text = topic_text + " //: " + definition_text
+                else:
+                    definition_text = "NoTopic //: " + definition_text
+                results[word_type].append(definition_text)
+            except (AttributeError, TypeError, IndexError) as e:
+                print(f"Exception occurred: {e}")
+
+    except Exception as e:
+        print(f"Unexpected exception occurred: {e}")
+
+    return results
 
 
 class Word(ParsingObject):
@@ -18,7 +62,7 @@ class Word(ParsingObject):
         self.__definitions = definitions or []
 
     def __str__(self):
-        return self._text
+        return self._text + " " + self.__word_type
 
     def to_dict(self):
         return {
@@ -28,6 +72,13 @@ class Word(ParsingObject):
             "word_type": self.__word_type,
             "definitions": self.__definitions
         }
+
+    def check_if_complete(self) -> bool:
+        self._is_complete = True if self.__word_type != "undefined" and len(self.__definitions) != 0 else False
+        return self._is_complete
+
+    def set_link(self, link: str):
+        self._link = link
 
     def print_all(self, depth: int):
         for definition in self.__definitions:
@@ -54,4 +105,35 @@ class Word(ParsingObject):
         self.__definitions = data_to_restore["definitions"]
 
     def parse_data(self, session: requests.Session) -> bool:
-        pass
+        """
+        Parses data (words' types and definitions) from the word's webpage
+        completing objects of class Word.
+        Note: you need to specify parameters of session variable before
+        giving it to this method. For example, specify headers for the session.
+        :param session:
+        :return: True if parsing process succeeded, else False.
+        """
+        if self._is_complete:
+            return self._is_complete
+
+        web_response = session.get(self.get_link())
+
+        if web_response.status_code == 200:
+
+            soup = BeautifulSoup(web_response.text, 'html.parser')
+
+            try:
+                res_dict = get_word_info(soup)
+                for word_type, definitions in res_dict.items():
+                    self.__word_type = word_type
+                    self.__definitions = definitions
+
+                if len(self.__definitions) != 0 and self.__word_type != 'undefined':
+                    self._is_complete = True
+
+            except AttributeError:
+                print(f'{Word.__name__} not found')
+        else:
+            print('Failed to get response...')
+
+        return self._is_complete

@@ -11,14 +11,25 @@ class ParsingObject(ABC):
         self._link = link
         self._is_complete = is_complete
 
-    def is_complete(self):
+    def is_complete(self) -> bool:
         return self._is_complete
 
-    def get_text(self):
+    def get_text(self) -> str:
         return self._text
 
-    def get_link(self):
+    def get_link(self) -> str:
         return self._link
+
+    def set_complete(self):
+        """
+        Sets status of is_complete to True.
+        :return:
+        """
+        self._is_complete = True
+
+    @abstractmethod
+    def check_if_complete(self) -> bool:
+        pass
 
     @abstractmethod
     def to_dict(self) -> dict:
@@ -56,6 +67,19 @@ class ParsingGroup(ParsingObject, ABC):
         """
         return self._children.copy()
 
+    def check_if_complete(self) -> bool:
+        if self._is_complete:
+            return True
+        n = len(self._children)
+        i = 0
+        is_complete = True
+        while i < n and is_complete:
+            is_complete = self._children[i].check_if_complete()
+            i += 1
+        self._is_complete = is_complete
+
+        return self._is_complete
+
     def to_dict(self) -> dict:
         """
         Puts data of the class into dictionary, including its children!
@@ -82,7 +106,7 @@ class ParsingGroup(ParsingObject, ABC):
         while option <= 0 or option > n:
             option = int(input("Choose child: "))
 
-        return self._children[option-1]
+        return self._children[option - 1]
 
     def print_all(self, depth: int = 0):
         for child in self._children:

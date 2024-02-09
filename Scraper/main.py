@@ -62,7 +62,8 @@ def create_and_save_web_page(session: requests.Session, file_name: str = "output
 
 def parse_chosen_data(session: requests.Session, webpage: WebPage) -> bool:
     """
-    Parses specific data: 1. All categories from the WebPage; 2. All the topics for specific category.
+    Parses specific data: 1. All categories from the WebPage; 2. All the topics for specific category;
+    3. All the definitions and types of words for specific category.
     :param session:
     :param webpage:
     :return: True, if process has been successful, otherwise False.
@@ -70,7 +71,7 @@ def parse_chosen_data(session: requests.Session, webpage: WebPage) -> bool:
     option = int(input("Choose what you want to do "
                        "\n 1. Parse all categories "
                        "\n 2. Parse topics for specific category "
-                       ""
+                       "\n 3. Parse types of words and their definitions for specific category."
                        "\n Enter: "))
 
     if option == 1:
@@ -83,6 +84,12 @@ def parse_chosen_data(session: requests.Session, webpage: WebPage) -> bool:
         min_delay = float(input("Enter minimal delay (float): "))
         max_delay = float(input("Enter maximal delay (float): "))
         status = webpage.parse_topics_for_specific_category(session, min_delay, max_delay)
+        print("Parsing categories status:", status)
+        return status
+    elif option == 3:
+        min_delay = float(input("Enter minimal delay (float): "))
+        max_delay = float(input("Enter maximal delay (float): "))
+        status = webpage.parse_words_for_specific_category(session, min_delay, max_delay)
         print("Parsing categories status:", status)
         return status
 
@@ -128,6 +135,7 @@ def choose_option(headers: dict):
                        "\n 2. Read WebPage and display its children. "
                        "\n 3. Parse data for the WebPage. "
                        "\n 4. Export WebPage data from .dat file into .csv table. "
+                       "\n 5. Update words values (adds link to the oxforddictionary to the beginning)."
                        "\n Enter: "))
     if option == 1:
         session = requests.Session()
@@ -171,7 +179,18 @@ def choose_option(headers: dict):
 
         dataframe = unpack_webpage(file_name_read)
 
-        dataframe.to_csv(f"./csv/{file_name_save}", index=False)
+        dataframe.to_csv(f"./csv/{file_name_save}.csv", index=False)
+
+    elif option == 5:
+        file_name_read = str(input("Enter file's name which you want to use (without extension, must be in data "
+                                   "folder): "))
+        file_name_save = str(input("Enter file's name where you want to save data (without extension, must be in data "
+                                   "folder): "))
+        webpage = load_web_page(file_name_read)
+
+        webpage.update_word_links()
+
+        save_web_page(webpage, file_name_save)
 
 
 def main():
@@ -186,6 +205,24 @@ def main():
 
     choose_option(headers)
 
+def test_word_parsing(file_path: str):
+    from Word import get_word_info
+    from bs4 import BeautifulSoup
+
+    with open(file_path, "rt", encoding="utf-8") as html:
+        html_lines = html.readlines()
+
+    html_text = ""
+    for line in html_lines:
+        html_text += line
+
+    soup = BeautifulSoup(html_text, "html.parser")
+
+    print(get_word_info(soup))
+
 
 if __name__ == '__main__':
     main()
+
+
+
