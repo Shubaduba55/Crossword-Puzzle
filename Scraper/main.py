@@ -72,27 +72,31 @@ def parse_chosen_data(session: requests.Session, webpage: WebPage) -> bool:
                        "\n 1. Parse all categories "
                        "\n 2. Parse topics for specific category "
                        "\n 3. Parse types of words and their definitions for specific category."
+                       "\n 4. Parse types of words and their definitions for each category."
                        "\n Enter: "))
 
+    min_delay = float(input("Enter minimal delay (float): "))
+    max_delay = float(input("Enter maximal delay (float): "))
     if option == 1:
-        min_delay = float(input("Enter minimal delay (float): "))
-        max_delay = float(input("Enter maximal delay (float): "))
         status = webpage.parse_categories(session, min_delay, max_delay)
         print("Parsing categories status:", status)
         return status
     elif option == 2:
-        min_delay = float(input("Enter minimal delay (float): "))
-        max_delay = float(input("Enter maximal delay (float): "))
         status = webpage.parse_topics_for_specific_category(session, min_delay, max_delay)
-        print("Parsing categories status:", status)
+        print("Parsing topics status:", status)
         return status
     elif option == 3:
-        min_delay = float(input("Enter minimal delay (float): "))
-        max_delay = float(input("Enter maximal delay (float): "))
         status = webpage.parse_words_for_specific_category(session, min_delay, max_delay)
-        print("Parsing categories status:", status)
+        print("Parsing words' data status:", status)
         return status
-
+    elif option == 4:
+        try:
+            status = webpage.parse_words_for_category(session, min_delay, max_delay)
+        except ConnectionError:
+            print("Connection error occured. Saving file.")
+            return True
+        print("Parsing words' data status:", status)
+        return status
     return False
 
 
@@ -136,6 +140,7 @@ def choose_option(headers: dict):
                        "\n 3. Parse data for the WebPage. "
                        "\n 4. Export WebPage data from .dat file into .csv table. "
                        "\n 5. Update words values (adds link to the oxforddictionary to the beginning)."
+                       "\n 6. Run through incomplete data and finish it."
                        "\n Enter: "))
     if option == 1:
         session = requests.Session()
@@ -192,6 +197,17 @@ def choose_option(headers: dict):
 
         save_web_page(webpage, file_name_save)
 
+    elif option == 6:
+        file_name_read = str(input("Enter file's name which you want to use (without extension, must be in data "
+                                   "folder): "))
+        file_name_save = str(input("Enter file's name where you want to save data (without extension, must be in data "
+                                   "folder): "))
+        webpage = load_web_page(file_name_read)
+
+        webpage.complete_words()
+
+        save_web_page(webpage, file_name_save)
+
 
 def main():
     # Setup headers (use: https://myhttpheader.com/)
@@ -204,6 +220,7 @@ def main():
     }
 
     choose_option(headers)
+
 
 def test_word_parsing(file_path: str):
     from Word import get_word_info
@@ -224,5 +241,6 @@ def test_word_parsing(file_path: str):
 if __name__ == '__main__':
     main()
 
-
-
+    # wp = load_web_page("OUCtest")
+    #
+    # wp.check_if_complete()

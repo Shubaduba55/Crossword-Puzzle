@@ -77,6 +77,8 @@ class ParsingGroup(ParsingObject, ABC):
             is_complete = self._children[i].check_if_complete()
             i += 1
         self._is_complete = is_complete
+        if not is_complete:
+            print(f"Not complete: {self._children[i-1]}")
 
         return self._is_complete
 
@@ -140,3 +142,5 @@ class ParsingGroup(ParsingObject, ABC):
             print('Failed to get response...')
 
         return self._is_parsed
+
+

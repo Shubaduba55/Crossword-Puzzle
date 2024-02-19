@@ -190,6 +190,39 @@ class WebPage(ParsingGroup):
         self.check_if_complete()
         return parsing_status_successful
 
+    def parse_words_for_category(self,
+                                 session: requests.Session,
+                                 min_delay: float = 0,
+                                 max_delay: float = 0) -> bool:
+        """
+        Parses words' definitions for each Topic of each Category.
+        :param max_delay: maximal sleep time between parsings.
+        :param min_delay: minimal sleep time between parsings.
+        :param session:
+        :return: True if parsing process succeeded, else False.
+        """
+
+        parsing_status_successful = False
+        sleeping_time = uniform(min_delay, max_delay)
+        category = self.display_and_choose_child()
+
+        if isinstance(category, Category):  # Always True
+            for topic in category.get_children():
+                for word in topic.get_children():
+                    print(word)
+                    parsing_status_successful = word.parse_data(session)
+                    sleeping_time = uniform(min_delay, max_delay)
+                time.sleep(sleeping_time)
+                print(f"Time of our sleep: {sleeping_time}")
+                if not parsing_status_successful:
+                    return False
+                else:
+                    topic.check_if_complete()
+        category.check_if_complete()
+
+        self.check_if_complete()
+        return parsing_status_successful
+
     def update_word_links(self):
         """
         Fixes the problem with links to Words (when they store only a part of the path
@@ -203,3 +236,14 @@ class WebPage(ParsingGroup):
                     word_link = word.get_link()
                     if word_link[:5] != "https":
                         word.set_link(oxford_website + word_link)
+
+    def complete_words(self):
+        for category in self.get_children():
+            for topic in category.get_children():
+                for word in topic.get_children():
+                    if not word.is_complete():
+                        print(word)
+                        word.finish_word()
+                topic.check_if_complete()
+            category.check_if_complete()
+        self.check_if_complete()

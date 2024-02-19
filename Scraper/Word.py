@@ -25,7 +25,8 @@ def get_word_info(soup: BeautifulSoup) -> dict:
 
         # ol.senses_multiple span.def, div:not(idioms) > ol.sense_single span.def
 
-        words_info = soup.select('div:not(idioms) > ol.senses_multiple li.sense, div:not(idioms) > '
+        # maybe delete div, should be :not(class)
+        words_info = soup.select('div:not(idioms) > ol.senses_multiple li.sense, :not(idioms) > '
                                  'ol.sense_single li.sense')
 
         results[word_type] = []
@@ -62,7 +63,9 @@ class Word(ParsingObject):
         self.__definitions = definitions or []
 
     def __str__(self):
-        return self._text + " " + self.__word_type
+        return (f"{self._text} {self.__word_type} \n" +
+                f"{self._link} \n" +
+                f"{self.__definitions}")
 
     def to_dict(self):
         return {
@@ -103,6 +106,26 @@ class Word(ParsingObject):
         self._is_complete = data_to_restore["is_complete"]
         self.__word_type = data_to_restore["word_type"]
         self.__definitions = data_to_restore["definitions"]
+
+    def finish_word(self):
+        type = str(input("Enter type of the word (Enter to skip):"))
+
+        if type != "":
+            self.__word_type = type
+
+            definition = "_"
+            while definition != "":
+                definition = str(input("Enter definition (Enter to stop): "))
+                if definition == "":
+                    break
+                topic = str(input("Enter topic of the definition (Enter to set NoTopic): "))
+                if topic == "":
+                    topic = "NoTopic"
+                self.__definitions.append(topic + " //: " + definition)
+
+        option = str(input("Should be word complete? Y/N: "))
+        if option == "Y":
+            self._is_complete = True
 
     def parse_data(self, session: requests.Session) -> bool:
         """
