@@ -118,11 +118,28 @@ def unpack_webpage(file_name: str) -> pd.DataFrame:
         for topic in topics_array:
             words_array = topic["children"]
             for word in words_array:
-                final_data.append({
-                    "Category": category["text"],
-                    "Topic": topic["text"],
-                    "Word": word["text"],
-                })
+                definitions_array = word["definitions"]
+                for definition in definitions_array:
+                    final_data.append({
+                        "Category": category["text"],
+                        "Topic": topic["text"],
+                        "Word": word["text"],
+                        "Word Type": word["word_type"],
+                        "Link": word["link"],
+                        "Complete": word["is_complete"],
+                        "Definition": definition
+                    })
+                if len(definitions_array) == 0:
+                    final_data.append({
+                        "Category": category["text"],
+                        "Topic": topic["text"],
+                        "Word": word["text"],
+                        "Word Type": word["word_type"],
+                        "Link": word["link"],
+                        "Complete": word["is_complete"],
+                        "Definition": "None"
+                    })
+
 
     df = pd.DataFrame(final_data)
     return df
@@ -239,7 +256,16 @@ def test_word_parsing(file_path: str):
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    df1 = pd.read_csv("csv/FinalWithIncomplete.csv")
+    df1["Word"] = df1["Word"].str.upper()
+    df_clues = pd.read_csv("C:/Інститут/Курс 3/Семестр 5/Курсова КПІ/clues (1).csv")
+    # print(df_clues.nunique())
+
+    inner_join_df = pd.merge(df1, df_clues, left_on="Word", right_on="answer", how='inner')
+    print("Inner join:")
+    print(inner_join_df.columns)
+    print(inner_join_df.nunique())
 
     # wp = load_web_page("OUCtest")
     #
